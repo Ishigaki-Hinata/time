@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:syncfusion_flutter_calendar/calendar.dart';
 
 void main() async {
   //アプリ実行前にFlutterアプリの機能を利用する場合に宣言(初期化のような動き)
@@ -50,48 +51,55 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(title: Text('Baby Name Votes')),
       //非同期処理でWigetを生成
-      body: StreamBuilder(
-        //initialize ・・・初期化
-        //future: initialize(),
-        builder: (context, snapshot) {
-          // // 通信中はスピナーを表示
-          // if (snapshot.connectionState != ConnectionState.done) {
-          //   return CircularProgressIndicator();
-          // }
+      body: Column(
 
-          // // エラー発生時はエラーメッセージを表示
-          // if (snapshot.hasError) {
-          //   return Text(snapshot.error.toString());
-          // }
+        children: [
+          SfCalendar(
+            view: CalendarView.month,
+          ),
 
-          // // データがnullでないかチェック
-          // if (!snapshot.hasData) {
-          //   return Text("データが存在しません");
-          // }
+          StreamBuilder(
+            stream: initialize(),
+            builder: (context, snapshot) {
+              // // 通信中はスピナーを表示
+              // if (snapshot.connectionState != ConnectionState.done) {
+              //   return CircularProgressIndicator();
+              // }
 
-          // documentList.forEach((elem) {
-          //   name.add(elem.get('name'));
-          //   votes.add(elem.get('votes'));
-          // });
-          // return Column(
-          //   children: <Widget> [
-          //     Text(name[0] + ':' + votes[0].toString()),
-          //     Text(name[1] + ':' + votes[1].toString()),
-          //   ],
+              // // エラー発生時はエラーメッセージを表示
+              // if (snapshot.hasError) {
+              //   return Text(snapshot.error.toString());
+              // }
 
-          return Column(
+              // // データがnullでないかチェック
+              // if (!snapshot.hasData) {
+              //   return Text("データが存在しません");
+              // }
 
-            // map ・・・要素それぞれに対して、渡した関数の処理を加えて新しく繰り返し処理する
-            // データを取得（名前と数）してテキストとしてColumnに書き出す
+              // documentList.forEach((elem) {
+              //   name.add(elem.get('name'));
+              //   votes.add(elem.get('votes'));
+              // });
+              // return Column(
+              //   children: <Widget> [
+              //     Text(name[0] + ':' + votes[0].toString()),
+              //     Text(name[1] + ':' + votes[1].toString()),
+              //   ],
 
-          children: documentList.map((data) => Text(data.get('name') + ' : ' + data.get('votes').toString())).toList(),
-          );
-        },
+              return Column(
+                  // map ・・・要素それぞれに対して、渡した関数の処理を加えて新しく繰り返し処理する
+                  // データを取得（名前と数）してテキストとしてColumnに書き出す
+                children: documentList.map((data) => Text(data.get('name') + ' : ' + data.get('votes').toString())).toList(),
+              );
+            },
+          ),
+
+        ],
       ),
     );
   }
 
-  Future<void> initialize() async {
+  Stream<void> initialize() async* {
     final snapshot =
     await FirebaseFirestore.instance.collection('baby').get();
     documentList = snapshot.docs;
