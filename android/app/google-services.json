@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "734117201517",
+    "project_id": "sukima-time-a6d70",
+    "storage_bucket": "sukima-time-a6d70.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:734117201517:android:3d50954b0277906877a164",
+        "android_client_info": {
+          "package_name": "com.sukima.time"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "734117201517-nuj42raamo6lm2la1idf0243qv93ubti.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyClDcqanRgHlkHY6WZ86KaUw5U9Kj9TJAs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "734117201517-nuj42raamo6lm2la1idf0243qv93ubti.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
