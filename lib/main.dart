@@ -56,15 +56,20 @@ class _MyHomePageState extends State<MyHomePage> {
         children: [
           SfCalendar(
             view: CalendarView.month,
+            allowedViews: [
+              CalendarView.month,
+              CalendarView.week,
+              CalendarView.day
+            ],
           ),
 
           StreamBuilder(
             stream: initialize(),
             builder: (context, snapshot) {
-              // // 通信中はスピナーを表示
-              // if (snapshot.connectionState != ConnectionState.done) {
-              //   return CircularProgressIndicator();
-              // }
+              // 通信中はスピナーを表示
+              if (snapshot.connectionState != ConnectionState.done) {
+                return CircularProgressIndicator();
+              }
 
               // // エラー発生時はエラーメッセージを表示
               // if (snapshot.hasError) {
@@ -89,7 +94,7 @@ class _MyHomePageState extends State<MyHomePage> {
               return Column(
                   // map ・・・要素それぞれに対して、渡した関数の処理を加えて新しく繰り返し処理する
                   // データを取得（名前と数）してテキストとしてColumnに書き出す
-                children: documentList.map((data) => Text(data.get('name') + ' : ' + data.get('votes').toString())).toList(),
+                //children: documentList.map((data) => Text(data.get('name') + ' : ' + data.get('votes').toString())).toList(),
               );
             },
           ),
@@ -100,15 +105,18 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Stream<void> initialize() async* {
-    final snapshot =
-    await FirebaseFirestore.instance.collection('baby').get();
+    final snapshot = await FirebaseFirestore.instance.collection('calendar').get();
     documentList = snapshot.docs;
 
     print("##################################################### initialize()");
     documentList.forEach((elem) {
-      print(elem.get('name'));
+      print(elem.get('start_time').toString());
+      print(elem.get('start_time').toDate().toLocal().toString());
       print(elem.get('votes'));
     });
     print("##################################################### initialize()");
   }
+
+  //getDateSource
 }
+//class AppointmentDataSource ex
