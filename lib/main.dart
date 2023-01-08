@@ -39,16 +39,25 @@ class MyHomePage extends StatefulWidget {
 
 //Stateをextendsしたクラスを作る
 class _MyHomePageState extends State<MyHomePage> {
+  late AppointmentDataSource dataSource;
+  late CollectionReference cref;
+
+  @override
+  void initState() {
+    super.initState();
+    dataSource = getCalendarDataSource();
+    cref = FirebaseFirestore.instance.collection('calendar');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text('カレンダー')),
-        body: buildBody(context));
+        appBar: AppBar(title: Text('カレンダー')), body: buildBody(context));
   }
 
   Widget buildBody(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('calendar').snapshots(),
+      stream: cref.snapshots(),
       builder: (context, snapshot) {
         //読み込んでいる間の表示
         if (!snapshot.hasData) return LinearProgressIndicator();
@@ -63,15 +72,31 @@ class _MyHomePageState extends State<MyHomePage> {
         });
         print(
             "##################################################### Firestore Access end");
+
+        dataSource.appointments!.clear();
+        snapshot.data!.docs.forEach((elem) {
+          dataSource.appointments!.add(Appointment(
+            startTime: elem.get('start_time').toDate().toLocal(),
+            endTime: elem.get('end_time').toDate().toLocal(),
+            subject: elem.get('subject'),
+            color: Colors.blue,
+            startTimeZone: '',
+            endTimeZone: '',
+          ));
+        });
+
+        dataSource.notifyListeners(
+            CalendarDataSourceAction.reset, dataSource.appointments!);
+
         return Column(
           children: [
             //Expanded 高さを最大限に広げる
             Expanded(
-              child: SfCalendar(),
+              child: SfCalendar(dataSource: dataSource),
             ),
             OutlinedButton(
               onPressed: () {
-                FirebaseFirestore.instance.collection('calendar').add({
+                cref.add({
                   'email': 'hinata.i@gmail.com',
                   'start_time': DateTime.now(),
                   'end_time': DateTime.now().add(Duration(hours: 3)),
@@ -84,5 +109,16 @@ class _MyHomePageState extends State<MyHomePage> {
         );
       },
     );
+  }
+
+  AppointmentDataSource getCalendarDataSource() {
+    List<Appointment> appointments = <Appointment>[];
+    return AppointmentDataSource(appointments);
+  }
+}
+
+class AppointmentDataSource extends CalendarDataSource {
+  AppointmentDataSource(List<Appointment> source) {
+    appointments = source;
   }
 }
