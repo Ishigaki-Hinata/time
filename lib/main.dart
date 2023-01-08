@@ -18,13 +18,12 @@ void main() async {
 // Stateful  ・・・状態を保持しない（変化する）
 // overrride ・・・上書き
 
-
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       // アイコンやタスクバーの時の表示
-      title: 'Baby Names',
+      title: 'カレンダー',
       home: MyHomePage(),
     );
   }
@@ -43,33 +42,41 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text('Baby Name Votes')),
-        body: buildBody(context)
-    );
+        appBar: AppBar(title: Text('カレンダー')),
+        body: buildBody(context));
   }
 
   Widget buildBody(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('baby').snapshots(),
+      stream: FirebaseFirestore.instance.collection('calendar').snapshots(),
       builder: (context, snapshot) {
         //読み込んでいる間の表示
         if (!snapshot.hasData) return LinearProgressIndicator();
 
-        print("##################################################### Firestore Access start");
+        print(
+            "##################################################### Firestore Access start");
         snapshot.data!.docs.forEach((elem) {
-          print(elem.get('name'));
-          print(elem.get('votes'));
+          print(elem.get('email').toString());
+          print(elem.get('start_time').toDate().toLocal().toString());
+          print(elem.get('end_time').toDate().toLocal().toString());
+          print(elem.get('subject').toString());
         });
-        print("##################################################### Firestore Access end");
+        print(
+            "##################################################### Firestore Access end");
         return Column(
           children: [
             //Expanded 高さを最大限に広げる
             Expanded(
-                child: Text("てすと")
+              child: SfCalendar(),
             ),
             OutlinedButton(
               onPressed: () {
-                snapshot.data!.docs[0].reference.update({'votes': FieldValue.increment(1)});
+                FirebaseFirestore.instance.collection('calendar').add({
+                  'email': 'hinata.i@gmail.com',
+                  'start_time': DateTime.now(),
+                  'end_time': DateTime.now().add(Duration(hours: 3)),
+                  'subject': 'lunch',
+                });
               },
               child: Text('ぼたん'),
             ),
