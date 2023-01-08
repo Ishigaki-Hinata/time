@@ -40,83 +40,42 @@ class MyHomePage extends StatefulWidget {
 
 //Stateをextendsしたクラスを作る
 class _MyHomePageState extends State<MyHomePage> {
-  //ドキュメント情報を入れる箱を用意
-  List<DocumentSnapshot> documentList = [];
-  // List<String> name = [];
-  // List<int> votes = [];
-
   @override
   Widget build(BuildContext context) {
-    //デザインWidget
     return Scaffold(
-      appBar: AppBar(title: Text('Baby Name Votes')),
-      //非同期処理でWigetを生成
-      body: Column(
-
-        children: [
-          SfCalendar(
-            view: CalendarView.month,
-            allowedViews: [
-              CalendarView.month,
-              CalendarView.week,
-              CalendarView.day
-            ],
-          ),
-
-          StreamBuilder(
-            stream: initialize(),
-            builder: (context, snapshot) {
-              // 通信中はスピナーを表示
-              if (snapshot.connectionState != ConnectionState.done) {
-                return CircularProgressIndicator();
-              }
-
-              // // エラー発生時はエラーメッセージを表示
-              // if (snapshot.hasError) {
-              //   return Text(snapshot.error.toString());
-              // }
-
-              // // データがnullでないかチェック
-              // if (!snapshot.hasData) {
-              //   return Text("データが存在しません");
-              // }
-
-              // documentList.forEach((elem) {
-              //   name.add(elem.get('name'));
-              //   votes.add(elem.get('votes'));
-              // });
-              // return Column(
-              //   children: <Widget> [
-              //     Text(name[0] + ':' + votes[0].toString()),
-              //     Text(name[1] + ':' + votes[1].toString()),
-              //   ],
-
-              return Column(
-                  // map ・・・要素それぞれに対して、渡した関数の処理を加えて新しく繰り返し処理する
-                  // データを取得（名前と数）してテキストとしてColumnに書き出す
-                //children: documentList.map((data) => Text(data.get('name') + ' : ' + data.get('votes').toString())).toList(),
-              );
-            },
-          ),
-
-        ],
-      ),
+        appBar: AppBar(title: Text('Baby Name Votes')),
+        body: buildBody(context)
     );
   }
 
-  Stream<void> initialize() async* {
-    final snapshot = await FirebaseFirestore.instance.collection('calendar').get();
-    documentList = snapshot.docs;
+  Widget buildBody(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('baby').snapshots(),
+      builder: (context, snapshot) {
+        //読み込んでいる間の表示
+        if (!snapshot.hasData) return LinearProgressIndicator();
 
-    print("##################################################### initialize()");
-    documentList.forEach((elem) {
-      print(elem.get('start_time').toString());
-      print(elem.get('start_time').toDate().toLocal().toString());
-      print(elem.get('votes'));
-    });
-    print("##################################################### initialize()");
+        print("##################################################### Firestore Access start");
+        snapshot.data!.docs.forEach((elem) {
+          print(elem.get('name'));
+          print(elem.get('votes'));
+        });
+        print("##################################################### Firestore Access end");
+        return Column(
+          children: [
+            //Expanded 高さを最大限に広げる
+            Expanded(
+                child: Text("てすと")
+            ),
+            OutlinedButton(
+              onPressed: () {
+                snapshot.data!.docs[0].reference.update({'votes': FieldValue.increment(1)});
+              },
+              child: Text('ぼたん'),
+            ),
+          ],
+        );
+      },
+    );
   }
-
-  //getDateSource
 }
-//class AppointmentDataSource ex
