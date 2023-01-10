@@ -85,8 +85,8 @@ class _MyHomePageState extends State<MyHomePage> {
             "##################################################### Firestore Access start");
         snapshot.data!.docs.forEach((elem) {
           print(elem.get('email').toString());
-          print(elem.get('start_time').toDate().toLocal().toString());
-          print(elem.get('end_time').toDate().toLocal().toString());
+          print(elem.get('start-time').toDate().toLocal().toString());
+          print(elem.get('end-time').toDate().toLocal().toString());
           print(elem.get('subject').toString());
         });
         print(
@@ -95,8 +95,8 @@ class _MyHomePageState extends State<MyHomePage> {
         dataSource.appointments!.clear();
         snapshot.data!.docs.forEach((elem) {
           dataSource.appointments!.add(Appointment(
-            startTime: elem.get('start_time').toDate().toLocal(),
-            endTime: elem.get('end_time').toDate().toLocal(),
+            startTime: elem.get('start-time').toDate().toLocal(),
+            endTime: elem.get('end-time').toDate().toLocal(),
             subject: elem.get('subject'),
             startTimeZone: '',
             endTimeZone: '',
@@ -110,7 +110,10 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             //Expanded 高さを最大限に広げる
             Expanded(
-              child: SfCalendar(dataSource: dataSource),
+              child: SfCalendar(
+                  dataSource: dataSource,
+                view: CalendarView.week,
+              ),
             ),
             OutlinedButton(
               onPressed: () {
@@ -129,7 +132,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return AppointmentDataSource(appointments);
   }
 
-  Future<List<Event>> getGoogleEventsData() async {
+  Future<void> getGoogleEventsData() async {
     //Googleサインイン1人目処理→同じような処理をすると2人目が出来そう
     final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
     print('#################################googleUser');
@@ -155,11 +158,18 @@ class _MyHomePageState extends State<MyHomePage> {
         //   'end_time': DateTime.now().add(Duration(hours: 3)),
         //   'subject': 'lunch',
         // });
-        print('#################################appointments'+ (event.start!.date ?? event.start!.dateTime!.toLocal()).toString());
-        appointments.add(event);
+        cref.add({
+          'email':(googleUser.email),
+          'start-time':(event.start!.date ?? event.start!.dateTime!.toLocal()),
+          'end-time':(event.end!.date ?? event.end!.dateTime!.toLocal()),
+          'subject':(event.summary),
+        });
+        print('#################################email---'+ (googleUser.email).toString());
+        print('#################################start-time---'+ (event.start!.date ?? event.start!.dateTime!.toLocal()).toString());
+        print('#################################end-time---'+ (event.end!.date ?? event.end!.dateTime!.toLocal()).toString());
+        print('#################################subject---'+ (event.summary).toString());
       }
     }
-    return appointments;
   }
 
 }
