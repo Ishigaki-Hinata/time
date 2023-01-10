@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
+import 'package:googleapis/calendar/v3.dart' hide Colors;
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:googleapis_auth/googleapis_auth.dart';
+import 'package:http/http.dart';
+import 'package:http/io_client.dart';
+
 
 void main() async {
   //アプリ実行前にFlutterアプリの機能を利用する場合に宣言(初期化のような動き)
@@ -42,12 +48,25 @@ class _MyHomePageState extends State<MyHomePage> {
   late AppointmentDataSource dataSource;
   late CollectionReference cref;
 
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: <String>[
+      CalendarApi.calendarScope,
+    ],
+  );
+
   @override
   void initState() {
     super.initState();
     dataSource = getCalendarDataSource();
     cref = FirebaseFirestore.instance.collection('calendar');
+
+    _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount? account){});
+    _googleSignIn.signInSilently();
+
+    
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +98,6 @@ class _MyHomePageState extends State<MyHomePage> {
             startTime: elem.get('start_time').toDate().toLocal(),
             endTime: elem.get('end_time').toDate().toLocal(),
             subject: elem.get('subject'),
-            color: Colors.blue,
             startTimeZone: '',
             endTimeZone: '',
           ));
@@ -96,12 +114,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             OutlinedButton(
               onPressed: () {
-                cref.add({
-                  'email': 'hinata.i@gmail.com',
-                  'start_time': DateTime.now(),
-                  'end_time': DateTime.now().add(Duration(hours: 3)),
-                  'subject': 'lunch',
-                });
+                getGoogleEventsData();
               },
               child: Text('ぼたん'),
             ),
@@ -115,10 +128,59 @@ class _MyHomePageState extends State<MyHomePage> {
     List<Appointment> appointments = <Appointment>[];
     return AppointmentDataSource(appointments);
   }
+
+  Future<List<Event>> getGoogleEventsData() async {
+    //Googleサインイン1人目処理→同じような処理をすると2人目が出来そう
+    final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+    print('#################################googleUser');
+    final GoogleAPIClient httpClient =
+    GoogleAPIClient(await googleUser!.authHeaders);
+    print('#################################httpClient');
+    final CalendarApi calendarAPI = CalendarApi(httpClient);
+    print('#################################calendarAPI');
+    final Events calEvents = await calendarAPI.events.list(
+      "primary",
+    );
+    print('#################################calEvents');
+    final List<Event> appointments = <Event>[];
+    if (calEvents != null) {
+      for (int i = 0; i < calEvents.items!.length; i++) {
+        final Event event = calEvents.items![i];
+        if (event.start == null) {
+          continue;
+        }
+        // cref.add({
+        //   'email': 'hinata.i@gmail.com', googleuser
+        //   'start_time': DateTime.now(),
+        //   'end_time': DateTime.now().add(Duration(hours: 3)),
+        //   'subject': 'lunch',
+        // });
+        print('#################################appointments'+ (event.start!.date ?? event.start!.dateTime!.toLocal()).toString());
+        appointments.add(event);
+      }
+    }
+    return appointments;
+  }
+
 }
 
 class AppointmentDataSource extends CalendarDataSource {
   AppointmentDataSource(List<Appointment> source) {
     appointments = source;
   }
+}
+
+class GoogleAPIClient extends IOClient {
+  final Map<String, String> _headers;
+
+  GoogleAPIClient(this._headers) : super();
+
+  @override
+  Future<IOStreamedResponse> send(BaseRequest request) =>
+      super.send(request..headers.addAll(_headers));
+
+  @override
+  Future<Response> head(Uri url, {Map<String, String>? headers}) =>
+      super.head(url,
+          headers: (headers != null ? (headers..addAll(_headers)) : headers));
 }
