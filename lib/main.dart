@@ -8,7 +8,6 @@ import 'package:googleapis_auth/googleapis_auth.dart';
 import 'package:http/http.dart';
 import 'package:http/io_client.dart';
 
-
 void main() async {
   //アプリ実行前にFlutterアプリの機能を利用する場合に宣言(初期化のような動き)
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,6 +51,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   late AppointmentDataSource dataSource;
   late CollectionReference cref;
+  GoogleSignInAccount? currentUser;
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: <String>[
@@ -65,13 +65,14 @@ class _MyHomePageState extends State<MyHomePage> {
     dataSource = getCalendarDataSource();
     cref = FirebaseFirestore.instance.collection('calendar');
 
-    _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount? account){});
+    _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
+      setState(() {
+        currentUser = account;
+        print('########## currentUser ' + currentUser.toString() ?? 'NULL');
+      });
+    });
     _googleSignIn.signInSilently();
-
-    
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -116,13 +117,33 @@ class _MyHomePageState extends State<MyHomePage> {
             //Expanded 高さを最大限に広げる
             Expanded(
               child: SfCalendar(
-                  dataSource: dataSource,
+                dataSource: dataSource,
                 view: CalendarView.week,
               ),
             ),
             OutlinedButton(
-              onPressed: () {
-                getGoogleEventsData();
+              onPressed: () async {
+                List<Event> events = await getGoogleEventsData();
+
+                if (currentUser == null) return;
+
+                final QuerySnapshot userEvents = await cref
+                    .where('email', isEqualTo: currentUser!.email)
+                    .get();
+                userEvents.docs.forEach((element) {
+                  cref.doc(element.id).delete();
+                });
+
+                events.forEach((element) {
+                  cref.add({
+                    'email': (currentUser!.email),
+                    'start-time': (element.start!.date ??
+                        element.start!.dateTime!.toLocal()),
+                    'end-time':
+                        (element.end!.date ?? element.end!.dateTime!.toLocal()),
+                    'subject': (element.summary),
+                  });
+                });
               },
               child: Text('ぼたん'),
             ),
@@ -137,12 +158,12 @@ class _MyHomePageState extends State<MyHomePage> {
     return AppointmentDataSource(appointments);
   }
 
-  Future<void> getGoogleEventsData() async {
+  Future<List<Event>> getGoogleEventsData() async {
     //Googleサインイン1人目処理→同じような処理をすると2人目が出来そう
     final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
     print('#################################googleUser');
     final GoogleAPIClient httpClient =
-    GoogleAPIClient(await googleUser!.authHeaders);
+        GoogleAPIClient(await googleUser!.authHeaders);
     print('#################################httpClient');
     final CalendarApi calendarAPI = CalendarApi(httpClient);
     print('#################################calendarAPI');
@@ -157,26 +178,20 @@ class _MyHomePageState extends State<MyHomePage> {
         if (event.start == null) {
           continue;
         }
-        // cref.add({
-        //   'email': 'hinata.i@gmail.com', googleuser
-        //   'start_time': DateTime.now(),
-        //   'end_time': DateTime.now().add(Duration(hours: 3)),
-        //   'subject': 'lunch',
-        // });
-        cref.add({
-          'email':(googleUser.email),
-          'start-time':(event.start!.date ?? event.start!.dateTime!.toLocal()),
-          'end-time':(event.end!.date ?? event.end!.dateTime!.toLocal()),
-          'subject':(event.summary),
-        });
-        print('#################################email---'+ (googleUser.email).toString());
-        print('#################################start-time---'+ (event.start!.date ?? event.start!.dateTime!.toLocal()).toString());
-        print('#################################end-time---'+ (event.end!.date ?? event.end!.dateTime!.toLocal()).toString());
-        print('#################################subject---'+ (event.summary).toString());
+
+        appointments.add(event);
+        print('#################################email---' +
+            (googleUser.email).toString());
+        print('#################################start-time---' +
+            (event.start!.date ?? event.start!.dateTime!.toLocal()).toString());
+        print('#################################end-time---' +
+            (event.end!.date ?? event.end!.dateTime!.toLocal()).toString());
+        print('#################################subject---' +
+            (event.summary).toString());
       }
     }
+    return appointments;
   }
-
 }
 
 class AppointmentDataSource extends CalendarDataSource {
