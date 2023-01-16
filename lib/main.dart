@@ -13,10 +13,15 @@ void main() async {
   //アプリ実行前にFlutterアプリの機能を利用する場合に宣言(初期化のような動き)
   WidgetsFlutterBinding.ensureInitialized();
   //Firebaseのパッケージを呼び出し
+  FirebaseOptions options = FirebaseOptions(
+      apiKey: "AIzaSyClDcqanRgHlkHY6WZ86KaUw5U9Kj9TJAs",
+      appId: "1:734117201517:android:3d50954b0277906877a164",
+      messagingSenderId: "734117201517",
+      projectId: "sukima-time-a6d70");
 
   //await ・・・非同期処理が完了するまで待ち、その非同期処理の結果を取り出してくれる
   //awaitを付与したら asyncも付与する
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(options: options);
   runApp(MyApp());
 }
 
