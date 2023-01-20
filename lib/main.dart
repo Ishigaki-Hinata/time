@@ -51,7 +51,9 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   late AppointmentDataSource dataSource;
   late CollectionReference cref;
+  final calendarController = CalendarController();
   GoogleSignInAccount? currentUser;
+  List<MaterialColor> eventColor = [Colors.red, Colors.green, Colors.yellow];
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: <String>[
@@ -99,13 +101,21 @@ class _MyHomePageState extends State<MyHomePage> {
             "##################################################### Firestore Access end");
 
         dataSource.appointments!.clear();
+
+        // cref.orderBy('email').snapshots().forEach((element) {
+        //   print('#####'+element.get('email'));
+        // });
+
         snapshot.data!.docs.forEach((elem) {
+          final int index = 0;
+          print('#####'+elem.get('email'));
           dataSource.appointments!.add(Appointment(
             startTime: elem.get('start-time').toDate().toLocal(),
             endTime: elem.get('end-time').toDate().toLocal(),
-            subject: elem.get('subject'),
+            //subject: elem.get('subject'),
             startTimeZone: '',
             endTimeZone: '',
+            color: eventColor[index % eventColor.length],
           ));
         });
 
@@ -119,8 +129,25 @@ class _MyHomePageState extends State<MyHomePage> {
               child: SfCalendar(
                 dataSource: dataSource,
                 view: CalendarView.week,
+                showNavigationArrow: true,
+                initialSelectedDate: DateTime.now(),
+                controller: calendarController,
               ),
             ),
+
+            Row(mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  OutlinedButton(
+                      onPressed: () {
+                        if (calendarController.view == CalendarView.month) {
+                          calendarController.view = CalendarView.day;
+                        } else if(calendarController.view == CalendarView.day) {
+                          calendarController.view = CalendarView.week;
+                        }else if(calendarController.view == CalendarView.week){
+                          calendarController.view = CalendarView.month;
+                        }
+                      },
+                      child: const Text("表示切替")),
             OutlinedButton(
               onPressed: () async {
                 List<Event> events = await getGoogleEventsData();
@@ -145,8 +172,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   });
                 });
               },
-              child: Text('ぼたん'),
+              child: Text('予定登録'),
             ),
+        ]),
           ],
         );
       },
