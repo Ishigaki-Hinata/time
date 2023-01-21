@@ -28,6 +28,17 @@ void main() async {
 // Stateful  ・・・状態を保持しない（変化する）
 // overrride ・・・上書き
 
+// class FirstPage extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       //作成ボタン、IDを入力する枠を作成
+//       title: 'カレンダー',
+//       home: MyHomePage(),
+//     );
+//   }
+// }
+
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -53,7 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
   late CollectionReference cref;
   final calendarController = CalendarController();
   GoogleSignInAccount? currentUser;
-  List<MaterialColor> eventColor = [Colors.red, Colors.green, Colors.yellow];
+  final List<Color> eventColor = [Colors.red, Colors.green, Colors.yellow];
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: <String>[
@@ -102,22 +113,28 @@ class _MyHomePageState extends State<MyHomePage> {
 
         dataSource.appointments!.clear();
 
-        // cref.orderBy('email').snapshots().forEach((element) {
-        //   print('#####'+element.get('email'));
-        // });
-
+        Map<String, Color> colorMap = new Map<String, Color>();
+        int colorSeq = 0;
         snapshot.data!.docs.forEach((elem) {
-          final int index = 0;
-          print('#####'+elem.get('email'));
+          if (!colorMap.containsKey(elem.get('email'))) {
+            colorMap[elem.get('email')] =
+            eventColor[colorSeq % eventColor.length];
+            colorSeq++;
+          }
           dataSource.appointments!.add(Appointment(
             startTime: elem.get('start-time').toDate().toLocal(),
             endTime: elem.get('end-time').toDate().toLocal(),
             //subject: elem.get('subject'),
             startTimeZone: '',
             endTimeZone: '',
-            color: eventColor[index % eventColor.length],
+            color: colorMap[elem.get('email')] ?? Colors.black,
           ));
         });
+
+        print('############# colorMap');
+        print(colorMap);
+        print('############# colorMap');
+        print(currentUser!.id);
 
         dataSource.notifyListeners(
             CalendarDataSourceAction.reset, dataSource.appointments!);
