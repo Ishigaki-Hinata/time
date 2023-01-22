@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
@@ -43,6 +44,16 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: [
+        Locale('ja'),
+      ],
+      locale: const Locale('ja'),
+
       // アイコンやタスクバーの時の表示
       title: 'カレンダー',
       home: MyHomePage(),
@@ -118,7 +129,7 @@ class _MyHomePageState extends State<MyHomePage> {
         snapshot.data!.docs.forEach((elem) {
           if (!colorMap.containsKey(elem.get('email'))) {
             colorMap[elem.get('email')] =
-            eventColor[colorSeq % eventColor.length];
+                eventColor[colorSeq % eventColor.length];
             colorSeq++;
           }
           dataSource.appointments!.add(Appointment(
@@ -146,52 +157,53 @@ class _MyHomePageState extends State<MyHomePage> {
               child: SfCalendar(
                 dataSource: dataSource,
                 view: CalendarView.week,
-                showNavigationArrow: true,
+                allowedViews: <CalendarView>[
+                  CalendarView.day,
+                  CalendarView.week,
+                  CalendarView.workWeek,
+                  CalendarView.month,
+                  CalendarView.timelineDay,
+                  CalendarView.timelineWeek,
+                  CalendarView.timelineWorkWeek,
+                  CalendarView.timelineMonth,
+                  CalendarView.schedule,
+                ],
                 initialSelectedDate: DateTime.now(),
                 controller: calendarController,
               ),
             ),
 
-            Row(mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  OutlinedButton(
-                      onPressed: () {
-                        if (calendarController.view == CalendarView.month) {
-                          calendarController.view = CalendarView.day;
-                        } else if(calendarController.view == CalendarView.day) {
-                          calendarController.view = CalendarView.week;
-                        }else if(calendarController.view == CalendarView.week){
-                          calendarController.view = CalendarView.month;
-                        }
-                      },
-                      child: const Text("表示切替")),
-            OutlinedButton(
-              onPressed: () async {
-                List<Event> events = await getGoogleEventsData();
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              SizedBox(
+                width: 250,
+              ),
+              OutlinedButton(
+                onPressed: () async {
+                  List<Event> events = await getGoogleEventsData();
 
-                if (currentUser == null) return;
+                  if (currentUser == null) return;
 
-                final QuerySnapshot userEvents = await cref
-                    .where('email', isEqualTo: currentUser!.email)
-                    .get();
-                userEvents.docs.forEach((element) {
-                  cref.doc(element.id).delete();
-                });
-
-                events.forEach((element) {
-                  cref.add({
-                    'email': (currentUser!.email),
-                    'start-time': (element.start!.date ??
-                        element.start!.dateTime!.toLocal()),
-                    'end-time':
-                        (element.end!.date ?? element.end!.dateTime!.toLocal()),
-                    'subject': (element.summary),
+                  final QuerySnapshot userEvents = await cref
+                      .where('email', isEqualTo: currentUser!.email)
+                      .get();
+                  userEvents.docs.forEach((element) {
+                    cref.doc(element.id).delete();
                   });
-                });
-              },
-              child: Text('予定登録'),
-            ),
-        ]),
+
+                  events.forEach((element) {
+                    cref.add({
+                      'email': (currentUser!.email),
+                      'start-time': (element.start!.date ??
+                          element.start!.dateTime!.toLocal()),
+                      'end-time': (element.end!.date ??
+                          element.end!.dateTime!.toLocal()),
+                      'subject': (element.summary),
+                    });
+                  });
+                },
+                child: Text('予定登録'),
+              ),
+            ]),
           ],
         );
       },
