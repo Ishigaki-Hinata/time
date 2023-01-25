@@ -44,15 +44,15 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      localizationsDelegates: [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: [
-        Locale('ja'),
-      ],
-      locale: const Locale('ja'),
+      // localizationsDelegates: [
+      //   GlobalMaterialLocalizations.delegate,
+      //   GlobalWidgetsLocalizations.delegate,
+      //   GlobalCupertinoLocalizations.delegate,
+      // ],
+      // supportedLocales: [
+      //   Locale('ja'),
+      // ],
+      // locale: const Locale('ja'),
 
       // アイコンやタスクバーの時の表示
       title: 'カレンダー',
@@ -92,10 +92,9 @@ class _MyHomePageState extends State<MyHomePage> {
     _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
       setState(() {
         currentUser = account;
-        print('########## currentUser ' + currentUser.toString() ?? 'NULL');
+        print('########## currentUserChanged ' + currentUser.toString() ?? 'NULL');
       });
     });
-    _googleSignIn.signInSilently();
   }
 
   @override
@@ -145,7 +144,7 @@ class _MyHomePageState extends State<MyHomePage> {
         print('############# colorMap');
         print(colorMap);
         print('############# colorMap');
-        print(currentUser!.id);
+        // print(currentUser!.id);
 
         dataSource.notifyListeners(
             CalendarDataSourceAction.reset, dataSource.appointments!);
@@ -218,7 +217,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<List<Event>> getGoogleEventsData() async {
     //Googleサインイン1人目処理→同じような処理をすると2人目が出来そう
     final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-    print('#################################googleUser');
+    print('#################################googleUser'+ googleUser.toString());
     final GoogleAPIClient httpClient =
         GoogleAPIClient(await googleUser!.authHeaders);
     print('#################################httpClient');
