@@ -61,6 +61,8 @@ class MyApp extends StatelessWidget {
   }
 }
 
+//State...データ
+//Wiget...UI
 class MyHomePage extends StatefulWidget {
   @override
   //createState()でState（Stateを継承したクラス）を返す
@@ -77,6 +79,7 @@ class _MyHomePageState extends State<MyHomePage> {
   GoogleSignInAccount? currentUser;
   final List<Color> eventColor = [Colors.red, Colors.green, Colors.yellow];
 
+  //GoogleCalendarをスコープ
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: <String>[
       CalendarApi.calendarScope,
@@ -85,14 +88,16 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState() {
+    // initState()...最初に一度呼ばれる、Widgetツリーの初期化
     super.initState();
     dataSource = getCalendarDataSource();
     cref = FirebaseFirestore.instance.collection('calendar');
 
+    //認証情報（アカウント）が変わったらcurrentUserをそのアカウントに当てはめる
     _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
       setState(() {
         currentUser = account;
-        print('########## currentUserChanged ' + currentUser.toString() ?? 'NULL');
+        // print('########## currentUserChanged ' + currentUser.toString() ?? 'NULL');
       });
     });
   }
@@ -146,6 +151,7 @@ class _MyHomePageState extends State<MyHomePage> {
         print('############# colorMap');
         // print(currentUser!.id);
 
+        //変化があったとき通知
         dataSource.notifyListeners(
             CalendarDataSourceAction.reset, dataSource.appointments!);
 
@@ -169,6 +175,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 ],
                 initialSelectedDate: DateTime.now(),
                 controller: calendarController,
+                monthViewSettings: MonthViewSettings(
+                  appointmentDisplayMode:
+                      MonthAppointmentDisplayMode.appointment,
+                ),
               ),
             ),
 
@@ -217,7 +227,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<List<Event>> getGoogleEventsData() async {
     //Googleサインイン1人目処理→同じような処理をすると2人目が出来そう
     final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-    print('#################################googleUser'+ googleUser.toString());
+    print('#################################googleUser' + googleUser.toString());
     final GoogleAPIClient httpClient =
         GoogleAPIClient(await googleUser!.authHeaders);
     print('#################################httpClient');
@@ -253,10 +263,12 @@ class _MyHomePageState extends State<MyHomePage> {
 class AppointmentDataSource extends CalendarDataSource {
   AppointmentDataSource(List<Appointment> source) {
     appointments = source;
+    //  streamで接続するときに使うデータソースクラス
   }
 }
 
 class GoogleAPIClient extends IOClient {
+  //Googleカレンダーとアプリをwebで接続するためのソケット
   final Map<String, String> _headers;
 
   GoogleAPIClient(this._headers) : super();
